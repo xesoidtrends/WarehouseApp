@@ -11,37 +11,19 @@
   <style>
     body {
       font-family: Arial;
-      margin: 0;
+      background: #eee;
       padding: 10px;
-      background: #f5f5f5;
     }
 
     .container {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
     }
 
-    .invoice {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-    }
-
-    h2 {
-      text-align: center;
-      margin: 5px 0;
-    }
-
-    .center {
-      text-align: center;
-      font-size: 12px;
-    }
-
-    input {
+    input, select {
       width: 100%;
       padding: 8px;
-      margin: 5px 0;
-      box-sizing: border-box;
+      margin: 4px 0;
     }
 
     button {
@@ -51,7 +33,35 @@
       background: black;
       color: white;
       border: none;
-      border-radius: 5px;
+    }
+
+    .invoice {
+      background: white;
+      padding: 15px;
+      border: 1px solid #000;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 2px solid black;
+      margin-bottom: 10px;
+    }
+
+    .small {
+      font-size: 12px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .box {
+      border: 1px solid #000;
+      padding: 8px;
+      margin-top: 8px;
+      font-size: 12px;
     }
 
     table {
@@ -62,7 +72,7 @@
     }
 
     th, td {
-      border-bottom: 1px solid #ddd;
+      border: 1px solid #000;
       padding: 5px;
       text-align: center;
     }
@@ -73,14 +83,27 @@
       font-weight: bold;
     }
 
-    svg {
-      display: block;
-      margin: 10px auto;
+    .barcode {
+      text-align: center;
+      margin-top: 10px;
     }
 
-    /* Hide buttons in PDF */
+    .footer {
+      margin-top: 15px;
+      font-size: 12px;
+    }
+
+    .stamp {
+      border: 2px dashed green;
+      color: green;
+      padding: 5px;
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
     @media print {
-      button, input {
+      input, select, button {
         display: none;
       }
       body {
@@ -94,37 +117,58 @@
 
 <div class="container">
 
-  <!-- INPUT SECTION -->
-  <div class="no-print">
-    <input id="custName" placeholder="Customer Name">
-    <input id="custAddress" placeholder="Address">
+  <!-- INPUT -->
+  <input id="custName" placeholder="Customer Name">
+  <input id="custAddress" placeholder="Customer Address">
 
-    <input id="product" placeholder="Product">
-    <input id="price" type="number" placeholder="Price">
-    <input id="qty" type="number" placeholder="Qty">
+  <input id="product" placeholder="Product">
+  <input id="price" type="number" placeholder="Price">
+  <input id="qty" type="number" placeholder="Qty">
 
-    <button onclick="addItem()">Add Item</button>
-    <button onclick="downloadPDF()">Download PDF</button>
-  </div>
+  <select id="paymentType">
+    <option value="COD">COD (40% Advance)</option>
+    <option value="UPI">UPI (Full Paid)</option>
+  </select>
 
-  <!-- INVOICE SECTION -->
+  <button onclick="addItem()">Add Item</button>
+  <button onclick="downloadPDF()">Download PDF</button>
+
+  <!-- INVOICE -->
   <div class="invoice" id="invoice">
 
-    <h2>Xesoid Trends</h2>
-    <div class="center">
-      Kuzhalamannam, Palakkad - 678702<br>
+    <div class="header">
+      <h3>XESOID TRENDS</h3>
+      <div class="small">
+        Kuzhalamannam, Palakkad - 678702<br>
+        Ph: 9072945144
+      </div>
+    </div>
+
+    <div class="row">
+      <div>Invoice: <span id="invoiceNo"></span></div>
+      <div>Date: <span id="date"></span></div>
+    </div>
+
+    <div class="row">
+      <div>Time: <span id="time"></span></div>
+      <div>Status: <span id="status"></span></div>
+    </div>
+
+    <!-- FROM / TO -->
+    <div class="box">
+      <b>FROM:</b><br>
+      Xesoid Trends<br>
+      Kuzhalamannam, Palakkad<br>
       Ph: 9072945144
     </div>
 
-    <hr>
+    <div class="box">
+      <b>TO:</b><br>
+      <span id="showName"></span><br>
+      <span id="showAddress"></span>
+    </div>
 
-    <p><b>Customer:</b> <span id="showName"></span></p>
-    <p><b>Address:</b> <span id="showAddress"></span></p>
-
-    <p><b>Invoice:</b> <span id="invoiceNo"></span></p>
-    <p><b>Date:</b> <span id="date"></span></p>
-    <p><b>Time:</b> <span id="time"></span></p>
-
+    <!-- TABLE -->
     <table id="items">
       <tr>
         <th>Item</th>
@@ -138,7 +182,29 @@
       Total: ₹ <span id="grandTotal">0</span>
     </div>
 
-    <svg id="barcode"></svg>
+    <!-- PAYMENT INFO -->
+    <div class="box">
+      <b>Payment Mode:</b> <span id="paymentMode"></span><br>
+      <span id="paymentNote"></span>
+    </div>
+
+    <!-- BARCODE -->
+    <div class="barcode">
+      <svg id="barcode"></svg>
+      <div class="small">Scan Invoice ID</div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="footer">
+      <br>
+      ________________________<br>
+      Authorized Signature
+    </div>
+
+    <!-- STAMP -->
+    <div class="stamp">
+      ✔ VERIFIED
+    </div>
 
   </div>
 
@@ -147,19 +213,26 @@
 <script>
 let total = 0;
 
-// Invoice Number
+// Invoice No
 let invoiceNumber = "INV" + Date.now();
 document.getElementById("invoiceNo").innerText = invoiceNumber;
 
 // Barcode
-JsBarcode("#barcode", invoiceNumber);
+JsBarcode("#barcode", invoiceNumber, {
+  format: "CODE128",
+  width: 2,
+  height: 50,
+  displayValue: true
+});
 
-// Date & Time
+// Date Time FIX
 let now = new Date();
-document.getElementById("date").innerText = now.toLocaleDateString();
-document.getElementById("time").innerText = now.toLocaleTimeString();
+document.getElementById("date").innerText =
+  now.toLocaleDateString("en-GB");
+document.getElementById("time").innerText =
+  now.toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' });
 
-// Add Item
+// Add item
 function addItem() {
   let product = document.getElementById("product").value;
   let price = document.getElementById("price").value;
@@ -173,9 +246,7 @@ function addItem() {
   let itemTotal = price * qty;
   total += itemTotal;
 
-  let table = document.getElementById("items");
-  let row = table.insertRow();
-
+  let row = document.getElementById("items").insertRow();
   row.insertCell(0).innerText = product;
   row.insertCell(1).innerText = price;
   row.insertCell(2).innerText = qty;
@@ -183,14 +254,29 @@ function addItem() {
 
   document.getElementById("grandTotal").innerText = total;
 
-  // Show customer in invoice
+  // Customer
   document.getElementById("showName").innerText =
     document.getElementById("custName").value;
 
   document.getElementById("showAddress").innerText =
     document.getElementById("custAddress").value;
 
-  // Clear inputs
+  // Payment logic
+  let type = document.getElementById("paymentType").value;
+
+  if (type === "COD") {
+    document.getElementById("paymentMode").innerText = "Cash on Delivery";
+    document.getElementById("paymentNote").innerText =
+      "40% advance paid. Balance on delivery.";
+    document.getElementById("status").innerText = "PARTIAL PAID";
+  } else {
+    document.getElementById("paymentMode").innerText = "UPI";
+    document.getElementById("paymentNote").innerText =
+      "Full payment received (100%).";
+    document.getElementById("status").innerText = "PAID";
+  }
+
+  // Clear
   document.getElementById("product").value = "";
   document.getElementById("price").value = "";
   document.getElementById("qty").value = "";
@@ -204,5 +290,4 @@ function downloadPDF() {
 </script>
 
 </body>
-</html>
-
+      </html>
