@@ -2,113 +2,74 @@
 <html>
 <head>
   <title>Xesoid Invoice</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #eee;
-      padding: 10px;
-    }
-
-    .container {
-      max-width: 420px;
-      margin: auto;
-    }
+    body { font-family: Arial; background:#eee; padding:10px; }
+    .container { max-width:420px; margin:auto; }
 
     input, select {
-      width: 100%;
-      padding: 8px;
-      margin: 4px 0;
+      width:100%; padding:8px; margin:4px 0;
     }
 
     button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      background: black;
-      color: white;
-      border: none;
+      width:100%; padding:10px; margin-top:5px;
+      background:black; color:white; border:none;
     }
 
     .invoice {
-      background: white;
-      padding: 15px;
-      border: 1px solid #000;
+      background:white; padding:15px; border:1px solid black;
     }
 
     .header {
-      text-align: center;
-      border-bottom: 2px solid black;
-      margin-bottom: 10px;
-    }
-
-    .small {
-      font-size: 12px;
+      text-align:center;
+      border-bottom:2px solid black;
+      margin-bottom:10px;
     }
 
     .row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
+      display:flex; justify-content:space-between;
+      font-size:12px;
     }
 
     .box {
-      border: 1px solid #000;
-      padding: 8px;
-      margin-top: 8px;
-      font-size: 12px;
+      border:1px solid black;
+      padding:8px; margin-top:8px;
+      font-size:12px;
     }
 
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 12px;
+      width:100%; border-collapse:collapse;
+      margin-top:10px; font-size:12px;
     }
 
     th, td {
-      border: 1px solid #000;
-      padding: 5px;
-      text-align: center;
+      border:1px solid black;
+      padding:5px; text-align:center;
     }
 
-    .total {
-      text-align: right;
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    .total { text-align:right; font-weight:bold; margin-top:10px; }
 
-    .barcode {
-      text-align: center;
-      margin-top: 10px;
-    }
+    .barcode { text-align:center; margin-top:10px; }
 
-    .footer {
-      margin-top: 15px;
-      font-size: 12px;
-    }
+    .footer { margin-top:15px; font-size:12px; }
 
     .stamp {
-      border: 2px dashed green;
-      color: green;
-      padding: 5px;
-      text-align: center;
-      margin-top: 10px;
-      font-weight: bold;
+      border:2px dashed green;
+      color:green;
+      text-align:center;
+      margin-top:10px;
+      padding:5px;
+      font-weight:bold;
     }
 
     @media print {
-      input, select, button {
-        display: none;
-      }
-      body {
-        background: white;
-      }
+      input, select, button { display:none; }
+      body { background:white; }
     }
   </style>
 </head>
@@ -138,7 +99,7 @@
 
     <div class="header">
       <h3>XESOID TRENDS</h3>
-      <div class="small">
+      <div style="font-size:12px">
         Kuzhalamannam, Palakkad - 678702<br>
         Ph: 9072945144
       </div>
@@ -154,7 +115,7 @@
       <div>Status: <span id="status"></span></div>
     </div>
 
-    <!-- FROM / TO -->
+    <!-- FROM -->
     <div class="box">
       <b>FROM:</b><br>
       Xesoid Trends<br>
@@ -162,13 +123,14 @@
       Ph: 9072945144
     </div>
 
+    <!-- TO -->
     <div class="box">
       <b>TO:</b><br>
       <span id="showName"></span><br>
       <span id="showAddress"></span>
     </div>
 
-    <!-- TABLE -->
+    <!-- ITEMS -->
     <table id="items">
       <tr>
         <th>Item</th>
@@ -182,19 +144,19 @@
       Total: ₹ <span id="grandTotal">0</span>
     </div>
 
-    <!-- PAYMENT INFO -->
+    <!-- PAYMENT -->
     <div class="box">
-      <b>Payment Mode:</b> <span id="paymentMode"></span><br>
+      <b>Payment:</b> <span id="paymentMode"></span><br>
       <span id="paymentNote"></span>
     </div>
 
     <!-- BARCODE -->
     <div class="barcode">
       <svg id="barcode"></svg>
-      <div class="small">Scan Invoice ID</div>
+      <div style="font-size:12px">Scan Invoice ID</div>
     </div>
 
-    <!-- SIGNATURE -->
+    <!-- SIGN -->
     <div class="footer">
       <br>
       ________________________<br>
@@ -212,28 +174,41 @@
 
 <script>
 let total = 0;
+let invoiceNumber = "";
 
-// Invoice No
-let invoiceNumber = "INV" + Date.now();
-document.getElementById("invoiceNo").innerText = invoiceNumber;
+// RUN AFTER LOAD
+window.onload = function () {
 
-// Barcode
-JsBarcode("#barcode", invoiceNumber, {
-  format: "CODE128",
-  width: 2,
-  height: 50,
-  displayValue: true
-});
+  invoiceNumber = "INV" + Date.now();
+  document.getElementById("invoiceNo").innerText = invoiceNumber;
 
-// Date Time FIX
-let now = new Date();
-document.getElementById("date").innerText =
-  now.toLocaleDateString("en-GB");
-document.getElementById("time").innerText =
-  now.toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' });
+  // DATE
+  let now = new Date();
+  let date = now.getDate().toString().padStart(2,'0') + "/" +
+             (now.getMonth()+1).toString().padStart(2,'0') + "/" +
+             now.getFullYear();
 
-// Add item
+  let time = now.getHours().toString().padStart(2,'0') + ":" +
+             now.getMinutes().toString().padStart(2,'0');
+
+  document.getElementById("date").innerText = date;
+  document.getElementById("time").innerText = time;
+
+  // BARCODE FIX
+  setTimeout(() => {
+    JsBarcode("#barcode", invoiceNumber, {
+      format:"CODE128",
+      width:2,
+      height:50,
+      displayValue:true
+    });
+  }, 500);
+};
+
+
+// ADD ITEM
 function addItem() {
+
   let product = document.getElementById("product").value;
   let price = document.getElementById("price").value;
   let qty = document.getElementById("qty").value;
@@ -254,14 +229,14 @@ function addItem() {
 
   document.getElementById("grandTotal").innerText = total;
 
-  // Customer
+  // CUSTOMER
   document.getElementById("showName").innerText =
     document.getElementById("custName").value;
 
   document.getElementById("showAddress").innerText =
     document.getElementById("custAddress").value;
 
-  // Payment logic
+  // PAYMENT
   let type = document.getElementById("paymentType").value;
 
   if (type === "COD") {
@@ -276,18 +251,22 @@ function addItem() {
     document.getElementById("status").innerText = "PAID";
   }
 
-  // Clear
+  // CLEAR
   document.getElementById("product").value = "";
   document.getElementById("price").value = "";
   document.getElementById("qty").value = "";
 }
 
+
 // PDF
 function downloadPDF() {
   let element = document.getElementById("invoice");
-  html2pdf().from(element).save("invoice.pdf");
+
+  setTimeout(() => {
+    html2pdf().from(element).save("invoice.pdf");
+  }, 700);
 }
 </script>
 
 </body>
-      </html>
+  </html>
