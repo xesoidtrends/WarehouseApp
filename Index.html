@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Xesoid Trends Invoice</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body { font-family: Arial; background:#111; color:white; padding:20px;}
+    input, button { width:100%; padding:10px; margin:5px 0;}
+    .box { max-width:400px; margin:auto; background:#222; padding:20px; border-radius:10px;}
+    a { color: lightblue; }
+  </style>
+</head>
+
+<body>
+
+<a href="upload.html">Go to Upload Page</a>
+
+<div class="box">
+  <h2>Xesoid Trends</h2>
+
+  <input id="sku" placeholder="Enter SKU">
+  <input id="name" placeholder="Product Name">
+  <input id="desc" placeholder="Description">
+  <input id="price" placeholder="Price" type="number">
+  <input id="qty" placeholder="Quantity" type="number" oninput="calc()">
+  <input id="total" placeholder="Total" readonly>
+
+  <button onclick="generateInvoice()">Generate PDF</button>
+</div>
+
+<canvas id="barcode"></canvas>
+
+<script>
+const API_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+
+// Auto fetch product
+document.getElementById("sku").addEventListener("change", function() {
+  fetch(API_URL + "?sku=" + this.value)
+    .then(res => res.text())
+    .then(data => {
+      if(data !== "Not found") {
+        let d = JSON.parse(data);
+        name.value = d.name;
+        desc.value = d.desc;
+        price.value = d.price;
+      }
+    });
+});
+
+function calc() {
+  total.value = price.value * qty.value;
+}
+
+function generateInvoice() {
+  let sku = document.getElementById("sku").value;
+
+  JsBarcode("#barcode", sku, {format:"CODE128"});
+
+  let canvas = document.getElementById("barcode");
+  let img = canvas.toDataURL("image/png");
+
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+
+  doc.text("XESOID TRENDS", 20, 20);
+  doc.text("SKU: " + sku, 20, 40);
+  doc.text("Product: " + name.value, 20, 50);
+  doc.text("Price: " + price.value, 20, 60);
+  doc.text("Qty: " + qty.value, 20, 70);
+  doc.text("Total: " + total.value, 20, 80);
+
+  doc.addImage(img, "PNG", 20, 90, 150, 40);
+
+  doc.save("invoice.pdf");
+}
+</script>
+
+</body>
+</html>
