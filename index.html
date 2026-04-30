@@ -176,14 +176,15 @@
 let total = 0;
 let invoiceNumber = "";
 
-// RUN AFTER LOAD
+// LOAD FIX
 window.onload = function () {
 
   invoiceNumber = "INV" + Date.now();
   document.getElementById("invoiceNo").innerText = invoiceNumber;
 
-  // DATE
+  // DATE TIME
   let now = new Date();
+
   let date = now.getDate().toString().padStart(2,'0') + "/" +
              (now.getMonth()+1).toString().padStart(2,'0') + "/" +
              now.getFullYear();
@@ -194,15 +195,21 @@ window.onload = function () {
   document.getElementById("date").innerText = date;
   document.getElementById("time").innerText = time;
 
-  // BARCODE FIX
-  setTimeout(() => {
-    JsBarcode("#barcode", invoiceNumber, {
-      format:"CODE128",
-      width:2,
-      height:50,
-      displayValue:true
-    });
-  }, 500);
+  // BARCODE (RETRY FIX)
+  function renderBarcode() {
+    try {
+      JsBarcode("#barcode", invoiceNumber, {
+        format:"CODE128",
+        width:2,
+        height:50,
+        displayValue:true
+      });
+    } catch(e) {
+      setTimeout(renderBarcode, 300);
+    }
+  }
+
+  renderBarcode();
 };
 
 
@@ -210,8 +217,8 @@ window.onload = function () {
 function addItem() {
 
   let product = document.getElementById("product").value;
-  let price = document.getElementById("price").value;
-  let qty = document.getElementById("qty").value;
+  let price = parseFloat(document.getElementById("price").value);
+  let qty = parseFloat(document.getElementById("qty").value);
 
   if (!product || !price || !qty) {
     alert("Fill all fields");
@@ -240,14 +247,25 @@ function addItem() {
   let type = document.getElementById("paymentType").value;
 
   if (type === "COD") {
+
+    let advance = total * 0.40;
+    let balance = total * 0.60;
+
     document.getElementById("paymentMode").innerText = "Cash on Delivery";
+
     document.getElementById("paymentNote").innerText =
-      "40% advance paid. Balance on delivery.";
+      "Advance: ₹" + advance.toFixed(2) +
+      " | Balance: ₹" + balance.toFixed(2);
+
     document.getElementById("status").innerText = "PARTIAL PAID";
+
   } else {
+
     document.getElementById("paymentMode").innerText = "UPI";
+
     document.getElementById("paymentNote").innerText =
-      "Full payment received (100%).";
+      "Full Paid: ₹" + total.toFixed(2);
+
     document.getElementById("status").innerText = "PAID";
   }
 
